@@ -16,6 +16,6 @@ func ErrorHandler(c *gin.Context) {
 	r := recover()
 	if r != nil {
 		log.Println("Recovered from panic: ", r)
-		utils.UpdateResponse(c, models.ResponseJSON{}, utils.NewApiError("Internal server error", fmt.Sprint(r), http.StatusInternalServerError))
+		utils.UpdateResponse(c, models.ResponseBody{}, utils.NewApiError("Internal server error", fmt.Sprint(r), http.StatusInternalServerError))
 	}
 }
