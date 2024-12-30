@@ -1,11 +1,28 @@
 package models
 
+type DurationRange struct {
+	MinMinutes uint `json:"min_minutes"`
+	MaxMinutes uint `json:"max_minutes"`
+}
+
+type ByPhase struct {
+	Ongoing string `json:"ongoing"`
+	Upcoming string `json:"upcoming"`
+	Completed string `json:"completed"`
+}
+
+type SortOrder struct {
+	ByDuration string `json:"by_duration"`
+	ByPhase `json:"by_phase"`
+}
+
 type RequestBody struct {
-	Platforms []string `json:"services"`
-	Phase []string `json:"phase"`
-	DurationRange []int `json:"duration_range"`
-	FromDate string `json:"from_date"`
-	ToDate string `json:"to_date"`
+	Platforms []string `json:"platforms"`
+	Phases []string `json:"phases"`
+	FromDateTime string `json:"from_date_time"`
+	ToDateTime string `json:"to_date_time"`
+	DurationRange `json:"duration_range"`
+	SortOrder  `json:"sort_order"`
 }
 
 type ApiError struct {
@@ -25,17 +42,18 @@ type Contest struct {
 }
 
 type ServiceContests struct {
+	Status string `json:"status"`
+	AllContests []Contest `json:"all_contests"`
+}
+
+type ResponseBody struct {
+	Status string `json:"status"`
 	OngoingContests []Contest `json:"ongoing_contests"`
 	UpcomingContests []Contest `json:"upcoming_contests"`
 	CompletedContests []Contest `json:"completed_contests"`
 }
 
-type ResponseJSON struct {
-	Status string `json:"status"`
-	ServiceContests
-}
-
-type ResponseJSONError struct {
+type ResponseBodyError struct {
 	Status string `json:"status"`
 	Message string `json:"message"`
 	Error string `json:"error"`
