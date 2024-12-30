@@ -21,6 +21,7 @@ func Logging() gin.HandlerFunc {
 // RequestBodyValidation middleware validates the request body
 func RequestBodyValidation() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// TODO: implement request body validation
 		log.Println("Request body validation")
 		c.Next()
 	}
