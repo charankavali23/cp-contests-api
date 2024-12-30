@@ -9,9 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UpdateResponse(c *gin.Context, resp models.ResponseJSON, apiError models.ApiError) {
+func UpdateResponse(c *gin.Context, resp_body models.ResponseBody, apiError models.ApiError) {
 	if apiError != (models.ApiError{}) {
-		errResp := models.ResponseJSONError{
+		errResp := models.ResponseBodyError{
 			Status: "failed",
 			Message: apiError.Message,
 			Error: apiError.Error,
@@ -19,7 +19,7 @@ func UpdateResponse(c *gin.Context, resp models.ResponseJSON, apiError models.Ap
 		c.JSON(apiError.StatusCode, errResp)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, resp_body)
 }
 
 func FetchAPIResponse(url string) (*http.Response, models.ApiError) {
