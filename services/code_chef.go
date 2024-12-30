@@ -84,7 +84,5 @@ func CodeChefContests(current_datetime time.Time) (models.ServiceContests, model
 			return models.ServiceContests{}, err
 		}
 	}
-	arr := []int{1, 2, 3}
-	log.Println(arr[10])
 	return codeChefData, models.ApiError{}
 }
