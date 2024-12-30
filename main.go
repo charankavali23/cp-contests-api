@@ -8,7 +8,6 @@ import (
 	"github.com/charankavali23/cp-contests-api/routes"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 func main() {
@@ -17,15 +16,9 @@ func main() {
 	// load configuration
 	config.LoadConfig()
 
-	log.Println(viper.Get("time_zone"))
-
-	// set up the router
+	// set and initilizeing the router and middleware
 	router := gin.Default()
-
-	// set up middleware
 	router.Use(middleware.Logging(), middleware.RequestBodyValidation())
-
-	// initialize routes
 	routes.InitRouter(router)
 
 	// start the server

@@ -1,3 +1,12 @@
 {
-    "time_zone": "Asia/Kolkata"
+    "time_zone": "Asia/Kolkata",
+    "code_chef": {
+        "site_url": "https://www.codechef.com/",
+        "api_url": "https://www.codechef.com/api/list/contests/all?sort_by=START&sorting_order=asc&offset=0&mode=all"
+    },
+    "codeforce_api_url": "https://codeforces.com/",
+    "atcoder_api_url": "https://atcoder.jp/",
+    "leetcode_api_url": "https://leetcode.com/",
+    "hackerrank_api_url": "https://www.hackerrank.com/",
+    "hacker_earth_api_url": "https://www.hackerearth.com/"
 }
