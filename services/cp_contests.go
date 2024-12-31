@@ -66,7 +66,7 @@ func FetchAllContests() (models.ResponseBody, models.ApiError) {
 	if apiError != (models.ApiError{}) {
 		return models.ResponseBody{}, apiError
 	}
-	codeforcesContests, apiError := GetCodeforceContests(currentDatetime)
+	codeforcesContests, apiError := GetCodeforcesContests(currentDatetime)
 	if apiError != (models.ApiError{}) {
 		return models.ResponseBody{}, apiError
 	}
@@ -89,7 +89,7 @@ func FetchContests(c *gin.Context) (models.ResponseBody, models.ApiError) {
 	if apiError != (models.ApiError{}) {
 		return models.ResponseBody{}, apiError
 	}
-	codeforcesContests, apiError := GetCodeforceContests(currentDatetime)
+	codeforcesContests, apiError := GetCodeforcesContests(currentDatetime)
 	if apiError != (models.ApiError{}) {
 		return models.ResponseBody{}, apiError
 	}
