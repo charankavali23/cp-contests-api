@@ -1,6 +1,9 @@
 package services
 
 import (
+	"encoding/json"
+	"net/http"
+	"io"
 	"log"
 	"strconv"
 	"time"
@@ -11,7 +14,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func FormateCodeforcesContest(contest models.CodeforcesContestDetails) (models.Contest, models.ApiError) {
+func formateCodeforcesContest(contest models.CodeforcesContestDetails) (models.Contest, models.ApiError) {
 	var url string
 	if contest.Phase == "CODING" || contest.Phase == "BEFORE" {
 		url = viper.GetString("codeforces.contest_reg_url") + strconv.Itoa(contest.Id)
@@ -30,24 +33,38 @@ func FormateCodeforcesContest(contest models.CodeforcesContestDetails) (models.C
 	models.ApiError{}
 }
 
-func GetCodeforcesContests() (models.ServiceContests, models.ApiError) {
+func processCodeforcesRawData() models.ApiError {
+	log.Println("Processing Codeforces contests")
+	codeforcesData = models.ServiceContests{}
+	for _, contest := range codeforcesRawData.Result {
+		formatedContest, apiError := formateCodeforcesContest(contest)
+		if apiError != (models.ApiError{}) {
+			return apiError
+		}
+		codeforcesData.AllContests = append(codeforcesData.AllContests, formatedContest)
+	}
+	return models.ApiError{}
+}
+
+func GetCodeforceContests(currentDatetime time.Time) (models.ServiceContests, models.ApiError) {
 	log.Println("Fetching Codeforces contests")
-	currentDatetime := time.Now()
 	if currentDatetime.IsZero() || currentDatetime.Sub(codeforcesLoadDateTime).Hours() >= 12 {
 		resp, apiError := utils.FetchAPIResponse(viper.GetString("codeforces.api_url"))
 		if apiError != (models.ApiError{}) {
 			log.Println("Error fetching Codeforces contests")
 			return models.ServiceContests{}, apiError
 		}
-		defer resp.Body.Close()
-		if apiError := utils.GetJsonBody(resp.Body, &codeforcesRawData); apiError != (models.ApiError{}) {
-			return models.ServiceContests{}, apiError
+		resp_body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Println("Error reading Codeforces contests response body")
+			return models.ServiceContests{}, utils.NewApiError("Error reading Codeforces contests response body", err.Error(), http.StatusInternalServerError)
 		}
-		rawData := [][]models.CodeforcesContestDetails{
-			codeforcesRawData.Result,
+		if err := json.Unmarshal(resp_body, &codeforcesRawData); err != nil {
+			log.Println("Error unmarshalling Codeforces contests response body")
+			return models.ServiceContests{}, utils.NewApiError("Error unmarshalling Codeforces contests response body", err.Error(), http.StatusInternalServerError)
 		}
-		if apiError := utils.ProcessRawData(rawData, &codeforcesData, FormateCodeforcesContest); apiError != (models.ApiError{}) {
-			return models.ServiceContests{}, apiError
+		if err := processCodeforcesRawData(); err != (models.ApiError{}) {
+			return models.ServiceContests{}, err
 		}
 		codeforcesLoadDateTime = currentDatetime
 	}
