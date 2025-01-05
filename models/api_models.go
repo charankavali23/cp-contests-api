@@ -1,26 +1,27 @@
 package models
 
 type DurationRange struct {
-	MinMinutes uint `json:"min_minutes"`
-	MaxMinutes uint `json:"max_minutes"`
+	MinMinutes interface{} `json:"min_minutes"`
+	MaxMinutes interface{} `json:"max_minutes"`
 }
 
-type ByPhase struct {
-	Ongoing string `json:"ongoing"`
-	Upcoming string `json:"upcoming"`
-	Completed string `json:"completed"`
+type ByStartTime struct {
+	Ongoing interface{} `json:"ongoing"`
+	Upcoming interface{} `json:"upcoming"`
+	Completed interface{} `json:"completed"`
 }
 
 type SortOrder struct {
-	ByDuration string `json:"by_duration"`
-	ByPhase `json:"by_phase"`
+	ByStartTime `json:"by_start_time"`
+	ByDuration interface{} `json:"by_duration"`
 }
 
 type RequestBody struct {
+	Usage string `json:"usage"`
 	Platforms []string `json:"platforms"`
 	Phases []string `json:"phases"`
-	FromDateTime string `json:"from_date_time"`
-	ToDateTime string `json:"to_date_time"`
+	FromDateTime interface{} `json:"from_date_time"`
+	ToDateTime interface{} `json:"to_date_time"`
 	DurationRange `json:"duration_range"`
 	SortOrder  `json:"sort_order"`
 }
