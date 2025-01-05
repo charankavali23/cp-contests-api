@@ -23,14 +23,16 @@ func FormateLeetcodeContest(contest models.LeetcodeContestDetails) (models.Conte
 	models.ApiError{}
 }
 
-func GetLeetcodeContests(currentDatetime time.Time) (models.ServiceContests, models.ApiError) {
+func GetLeetcodeContests() (models.ServiceContests, models.ApiError) {
 	log.Println("Fetching Leetcode contests")
+	currentDatetime := time.Now()
 	if currentDatetime.IsZero() || currentDatetime.Sub(leetcodeLoadDateTime).Hours() >= 12 {
 		resp, apiError := utils.FetchAPIResponse(viper.GetString("leetcode.api_url"))
 		if apiError != (models.ApiError{}) {
 			log.Println("Error fetching Leetcode contests")
 			return models.ServiceContests{}, apiError
 		}
+		defer resp.Body.Close()
 		if apiError := utils.GetJsonBody(resp.Body, &leetcodeRawData); apiError != (models.ApiError{}) {
 			return models.ServiceContests{}, apiError
 		}

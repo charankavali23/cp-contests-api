@@ -33,14 +33,16 @@ func FormateCodeChefContest(contest models.CodeChefContestDetails) (models.Conte
 }
 
 // CodeChefContests fetches CodeChef contests
-func GetCodeChefContests(currentDatetime time.Time) (models.ServiceContests, models.ApiError) {
+func GetCodeChefContests() (models.ServiceContests, models.ApiError) {
 	log.Println("CodeChef contests")
+	currentDatetime := time.Now()
 	if codeChefLoadDateTime.IsZero() || currentDatetime.Sub(codeChefLoadDateTime).Hours() >= 12 {
 		resp, apiError := utils.FetchAPIResponse(viper.GetString("code_chef.api_url"))
 		if apiError != (models.ApiError{}) {
 			log.Println("Error fetching CodeChef contests")
 			return models.ServiceContests{}, apiError
 		}
+		defer resp.Body.Close()
 		if apiError := utils.GetJsonBody(resp.Body, &codeChefRawData); apiError != (models.ApiError{}) {
 			return models.ServiceContests{}, apiError
 		}

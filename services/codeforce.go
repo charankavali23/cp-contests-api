@@ -30,14 +30,16 @@ func FormateCodeforcesContest(contest models.CodeforcesContestDetails) (models.C
 	models.ApiError{}
 }
 
-func GetCodeforcesContests(currentDatetime time.Time) (models.ServiceContests, models.ApiError) {
+func GetCodeforcesContests() (models.ServiceContests, models.ApiError) {
 	log.Println("Fetching Codeforces contests")
+	currentDatetime := time.Now()
 	if currentDatetime.IsZero() || currentDatetime.Sub(codeforcesLoadDateTime).Hours() >= 12 {
 		resp, apiError := utils.FetchAPIResponse(viper.GetString("codeforces.api_url"))
 		if apiError != (models.ApiError{}) {
 			log.Println("Error fetching Codeforces contests")
 			return models.ServiceContests{}, apiError
 		}
+		defer resp.Body.Close()
 		if apiError := utils.GetJsonBody(resp.Body, &codeforcesRawData); apiError != (models.ApiError{}) {
 			return models.ServiceContests{}, apiError
 		}
