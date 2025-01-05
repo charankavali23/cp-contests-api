@@ -1,10 +1,11 @@
 package utils
 
 import (
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
-	"encoding/json"
+	"reflect"
 
 	"github.com/charankavali23/cp-contests-api/models"
 
@@ -49,12 +50,12 @@ func NewApiError(message string, err string, statusCode int) models.ApiError {
 func GetJsonBody(jsonBodyRC io.ReadCloser, v any) models.ApiError {
 	jsonBodyBytes, err := io.ReadAll(jsonBodyRC)
 	if err != nil {
-		log.Println("Error reading Codeforces contests response body")
-		return NewApiError("Error reading Codeforces contests response body", err.Error(), http.StatusInternalServerError)
+		log.Println("Error reading contests response body")
+		return NewApiError("Error reading contests response body", err.Error(), http.StatusInternalServerError)
 	}
 	if err := json.Unmarshal(jsonBodyBytes, &v); err != nil {
-		log.Println("Error unmarshalling Codeforces contests response body")
-		return NewApiError("Error unmarshalling Codeforces contests response body", err.Error(), http.StatusInternalServerError)
+		log.Println("Error unmarshalling contests response body")
+		return NewApiError("Error unmarshalling contests response body", err.Error(), http.StatusInternalServerError)
 	}
 	return models.ApiError{}
 }
@@ -68,6 +69,26 @@ func ProcessRawData[serviceContestDetails any](rawData [][]serviceContestDetails
 			}
 			processedData.AllContests = append(processedData.AllContests, formatedContest)
 		}
+	}
+	return models.ApiError{}
+}
+
+func IsAvailable[dataType any](object dataType, array []dataType) bool {
+	for _, element := range array {
+		if reflect.DeepEqual(element, object) {
+			return true
+		}
+	}
+	return false
+}
+
+func MapToStruct[structType any](data map[string]interface{}, object *structType) models.ApiError {
+	jsonDate, err := json.Marshal(data)
+	if err != nil {
+		return NewApiError("Error marshalling data", err.Error(), http.StatusInternalServerError)
+	}
+	if err := json.Unmarshal(jsonDate, &object); err != nil {
+		return NewApiError("Error unmarshalling data", err.Error(), http.StatusInternalServerError)
 	}
 	return models.ApiError{}
 }
