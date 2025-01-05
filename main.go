@@ -12,15 +12,12 @@ import (
 
 func main() {
 	log.Println("Competitive Programming Contest API")
-
 	// load configuration
 	config.LoadConfig()
-
 	// set and initilizeing the router and middleware
 	router := gin.Default()
-	router.Use(middleware.Logging(), middleware.RequestBodyValidation())
+	router.Use(middleware.APILoggingMiddleware(), middleware.RequestValidatorMiddleware())
 	routes.InitRouter(router)
-
 	// start the server
 	router.Run(":8000")
 }

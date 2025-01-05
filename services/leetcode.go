@@ -1,9 +1,6 @@
 package services
 
 import (
-	"encoding/json"
-	"net/http"
-	"io"
 	"log"
 	"time"
 
@@ -13,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func formateLeetcodeContest(contest models.LeetcodeContestDetails) (models.Contest, models.ApiError) {
+func FormateLeetcodeContest(contest models.LeetcodeContestDetails) (models.Contest, models.ApiError) {
 	return models.Contest{
 		Platform: "leetcode",
 		Id: contest.TitleSlug,
@@ -26,38 +23,24 @@ func formateLeetcodeContest(contest models.LeetcodeContestDetails) (models.Conte
 	models.ApiError{}
 }
 
-func processLeetcodeRawData() models.ApiError {
-	log.Println("Processing leetcode contests")
-	leetcodeData = models.ServiceContests{}
-	for _, contest := range leetcodeRawData.Data.AllContests {
-		formatedContest, apiError := formateLeetcodeContest(contest)
-		if apiError != (models.ApiError{}) {
-			return apiError
-		}
-		leetcodeData.AllContests = append(leetcodeData.AllContests, formatedContest)
-	}
-	return models.ApiError{}
-}
-
-func GetLeetcodeContests(currentDatetime time.Time) (models.ServiceContests, models.ApiError) {
+func GetLeetcodeContests() (models.ServiceContests, models.ApiError) {
 	log.Println("Fetching Leetcode contests")
+	currentDatetime := time.Now()
 	if currentDatetime.IsZero() || currentDatetime.Sub(leetcodeLoadDateTime).Hours() >= 12 {
 		resp, apiError := utils.FetchAPIResponse(viper.GetString("leetcode.api_url"))
 		if apiError != (models.ApiError{}) {
 			log.Println("Error fetching Leetcode contests")
 			return models.ServiceContests{}, apiError
 		}
-		resp_body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Println("Error reading leetcode contests response body")
-			return models.ServiceContests{}, utils.NewApiError("Error reading leetcode contests response body", err.Error(), http.StatusInternalServerError)
-		}	
-		if err := json.Unmarshal(resp_body, &leetcodeRawData); err != nil {
-			log.Println("Error unmarshalling leetcode contests response body")
-			return models.ServiceContests{}, utils.NewApiError("Error unmarshalling leetcode contests response body", err.Error(), http.StatusInternalServerError)
+		defer resp.Body.Close()
+		if apiError := utils.GetJsonBody(resp.Body, &leetcodeRawData); apiError != (models.ApiError{}) {
+			return models.ServiceContests{}, apiError
 		}
-		if err := processLeetcodeRawData(); err != (models.ApiError{}) {
-			return models.ServiceContests{}, err
+		rawData := [][]models.LeetcodeContestDetails{
+			leetcodeRawData.Data.AllContests,
+		}
+		if apiError := utils.ProcessRawData(rawData, &leetcodeData, FormateLeetcodeContest); apiError != (models.ApiError{}) {
+			return models.ServiceContests{}, apiError
 		}
 		leetcodeLoadDateTime = currentDatetime
 	}
