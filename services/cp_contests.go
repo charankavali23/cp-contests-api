@@ -51,6 +51,12 @@ var defaultRequestBody = models.RequestBody{
     },
 }
 
+var platformsFunc = map[string]func()(models.ServiceContests, models.ApiError){
+	"codechef": GetCodeChefContests,
+	"codeforces": GetCodeforcesContests,
+	"leetcode": GetLeetcodeContests,
+}
+
 func UpdateRequestBody(requestBody *models.RequestBody) {
 	if requestBody.FromDateTime == nil {
 		requestBody.FromDateTime = defaultRequestBody.FromDateTime
@@ -141,24 +147,38 @@ func getResponseBody(allContests []models.Contest, requestBody models.RequestBod
 	return resp_body
 }
 
-func FetchAllContests() (models.ResponseBody, models.ApiError) {
-	log.Println("Fetch all contests")
-	codeChefcontests, apiError := GetCodeChefContests()
-	if apiError != (models.ApiError{}) {
-		return models.ResponseBody{}, apiError
+func fetchPlatformsContests(platforms []string) ([]models.Contest, models.ApiError) {
+	type result struct {
+		Contests models.ServiceContests
+		ApiError models.ApiError
 	}
-	codeforcesContests, apiError := GetCodeforcesContests()
-	if apiError != (models.ApiError{}) {
-		return models.ResponseBody{}, apiError
-	}
-	leetcodeContests, apiError := GetLeetcodeContests()
-	if apiError != (models.ApiError{}) {
-		return models.ResponseBody{}, apiError
+	resultsChan := make(chan result, len(platforms))
+	for _, platform := range platforms {
+		go func(fetcher func() (models.ServiceContests, models.ApiError)) {
+			contests, apiError := fetcher()
+			resultsChan <- result{
+				Contests: contests,
+				ApiError: apiError,
+			}
+		}(platformsFunc[platform])
 	}
 	var allContests []models.Contest
-	allContests = append(allContests, codeChefcontests.AllContests...)
-	allContests = append(allContests, codeforcesContests.AllContests...)
-	allContests = append(allContests, leetcodeContests.AllContests...)
+	for i := 0; i < len(platforms); i++ {
+		res := <- resultsChan
+		if res.ApiError != (models.ApiError{}) {
+			return nil, res.ApiError
+		}
+		allContests = append(allContests, res.Contests.AllContests...)
+	}
+	return allContests, models.ApiError{}
+}
+
+func FetchAllContests() (models.ResponseBody, models.ApiError) {
+	log.Println("Fetch all contests")
+	allContests, apiError := fetchPlatformsContests(defaultRequestBody.Platforms)
+	if apiError != (models.ApiError{}) {
+		return models.ResponseBody{}, models.ApiError{}
+	}
 	resp_body := getResponseBody(allContests, defaultRequestBody)
 	return resp_body, models.ApiError{}
 }
@@ -172,27 +192,9 @@ func FetchContests(c *gin.Context) (models.ResponseBody, models.ApiError) {
 	requestBody := validateRequestBody.(models.RequestBody)
 	UpdateRequestBody(&requestBody)
 	log.Printf("Updated Request body: %+v", requestBody)
-	var allContests []models.Contest
-	if utils.IsAvailable("codechef", requestBody.Platforms) {
-		codeChefcontests, apiError := GetCodeChefContests()
-		if apiError != (models.ApiError{}) {
-			return models.ResponseBody{}, apiError
-		}
-		allContests = append(allContests, codeChefcontests.AllContests...)
-	}
-	if utils.IsAvailable("codeforce", requestBody.Platforms) {
-		codeforcesContests, apiError := GetCodeforcesContests()
-		if apiError != (models.ApiError{}) {
-			return models.ResponseBody{}, apiError
-		}
-		allContests = append(allContests, codeforcesContests.AllContests...)
-	}
-	if utils.IsAvailable("leetcode", requestBody.Platforms) {
-		leetcodeContests, apiError := GetLeetcodeContests()
-		if apiError != (models.ApiError{}) {
-			return models.ResponseBody{}, apiError
-		}
-		allContests = append(allContests, leetcodeContests.AllContests...)
+	allContests, apiError := fetchPlatformsContests(requestBody.Platforms)
+	if apiError != (models.ApiError{}) {
+		return models.ResponseBody{}, models.ApiError{}
 	}
 	resp_body := getResponseBody(allContests, requestBody)
 	return resp_body, models.ApiError{}
